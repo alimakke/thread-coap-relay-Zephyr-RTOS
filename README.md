@@ -319,4 +319,4 @@ Les logs sont visibles sur le port série de chaque carte (115200 bauds).
 
 ## Licence
 
-Code dérivé des exemples Nordic Semiconductor — `LicenseRef-Nordic-5-Clause`.
+Projet basé sur les exemples CoAP du nRF Connect SDK de Nordic Semiconductor, sous licence LicenseRef-Nordic-5-Clause. Modifications : Ali Makki.
