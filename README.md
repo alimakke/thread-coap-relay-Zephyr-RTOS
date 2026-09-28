@@ -1,4 +1,6 @@
-# Thread CoAP – Serveur + 2 clients avec mode relais
+# thread-coap-relay-Zephyr-RTOS
+
+**Thread CoAP – Serveur + 2 clients avec mode relais**
 
 Projet basé sur les exemples **CoAP Server / CoAP Client** du nRF Connect SDK (Zephyr + OpenThread), modifié pour :
 
@@ -132,7 +134,7 @@ Le dataset actif est sauvegardé en mémoire flash : après un redémarrage, les
 
 ## Étape 2 – Serveur CoAP et clients CoAP
 
-### 2.1 Serveur CoAP (`coap_server/`)
+### 2.1 Serveur CoAP (`coap_srv_54L/`)
 
 Au démarrage, `ot_coap_init()` enregistre trois ressources CoAP et lance le serveur sur le port 5683 :
 
@@ -146,7 +148,7 @@ Au démarrage, `ot_coap_init()` enregistre trois ressources CoAP et lance le ser
 
 **Provisioning** : un appui sur le **bouton 4** du serveur ouvre une fenêtre de provisioning de **5 secondes** (LED3 clignote). Dès qu'un client a été appairé, la fenêtre se ferme : il faut donc **rappuyer sur le bouton 4 pour chaque client**.
 
-### 2.2 Clients CoAP (`coap_client/`)
+### 2.2 Clients CoAP (`coap_client_nrf52840/`)
 
 Chaque client joue deux rôles :
 
@@ -222,7 +224,7 @@ Le fonctionnement est symétrique : le client 2 en mode 2 pilote la LED bleue du
 | **LED rouge** (`DK_LED1`) | Éteinte : pas connecté · Fixe : mode 1 · Clignotante : mode 2 |
 | **LED bleue** (`DK_LED2`) | « Lumière » du client (pilotée par l'autre client en mode 2) |
 
-> Selon la carte, la LED rouge et la LED bleue peuvent être inversées : échanger `DK_LED1` et `DK_LED2` dans `coap_client/src/main.c` si nécessaire.
+> Selon la carte, la LED rouge et la LED bleue peuvent être inversées : échanger `DK_LED1` et `DK_LED2` dans `coap_client_nrf52840/src/main.c` si nécessaire.
 
 ### Commandes BLE (optionnel, `CONFIG_BT_NUS`)
 
@@ -242,21 +244,24 @@ Si le Bluetooth NUS est activé sur le client, on peut envoyer un caractère dep
 ```
 .
 ├── README.md
-├── interface/
-│   └── coap_server_client_interface.h   # URI partagées : light, provisioning, relay
-├── coap_server/
+├── .gitignore
+├── coap_srv_54L/
 │   ├── CMakeLists.txt
+│   ├── Kconfig
 │   ├── prj.conf
+│   ├── interface/
+│   │   └── coap_server_client_interface.h   # URI partagées : light, provisioning, relay
 │   └── src/
-│       ├── main.c                        # boutons, LEDs, provisioning
-│       ├── ot_coap_utils.c               # ressources /light, /provisioning, /relay
+│       ├── main.c                            # boutons, LEDs, provisioning
+│       ├── ot_coap_utils.c                   # ressources /light, /provisioning, /relay
 │       └── ot_coap_utils.h
-└── coap_client/
-    ├── CMakeLists.txt
+└── coap_client_nrf52840/
+    ├── CMakeLists.txt                        # inclut ../coap_srv_54L/interface
+    ├── Kconfig
     ├── prj.conf
     └── src/
-        ├── main.c                        # bouton unique, simple/double clic, modes
-        ├── coap_client_utils.c           # requêtes CoAP + ressource /light locale
+        ├── main.c                            # bouton unique, simple/double clic, modes
+        ├── coap_client_utils.c               # requêtes CoAP + ressource /light locale
         └── coap_client_utils.h
 ```
 
@@ -270,17 +275,27 @@ L'en-tête partagé doit définir la nouvelle URI du relais en plus des URI d'or
 
 ## Compilation et flashage
 
-Prérequis : nRF Connect SDK installé (`west`, toolchain), trois cartes nRF compatibles Thread (ex. nRF52840 DK).
+Prérequis : nRF Connect SDK installé (`west`, toolchain) et trois cartes compatibles Thread :
+
+| Rôle | Carte | Dossier |
+|---|---|---|
+| Serveur | nRF54L15 DK | `coap_srv_54L/` |
+| Client 1 et client 2 | carte nRF52840 | `coap_client_nrf52840/` |
+
+```bash
+git clone https://github.com/alimakke/thread-coap-relay-Zephyr-RTOS.git
+cd thread-coap-relay-Zephyr-RTOS
+```
 
 ```bash
 # Serveur
-cd coap_server
-west build -b <votre_carte> -p
+cd coap_srv_54L
+west build -b nrf54l15dk/nrf54l15/cpuapp -p
 west flash --snr <numero_serie_carte_serveur>
 
 # Client (à flasher sur les deux cartes clientes)
-cd ../coap_client
-west build -b <votre_carte> -p
+cd ../coap_client_nrf52840
+west build -b <carte_nrf52840> -p        # ex. nrf52840dk/nrf52840
 west flash --snr <numero_serie_client_1>
 west flash --snr <numero_serie_client_2>
 ```
